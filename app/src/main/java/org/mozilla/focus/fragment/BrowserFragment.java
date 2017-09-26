@@ -774,6 +774,14 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
                 break;
             }
 
+            case R.id.req_desktop: {
+//                final IWebView webView = getWebView();
+//                if (webView != null) {
+//                    webView.stopLoading();
+//                }
+                break;
+            }
+
             case R.id.settings:
                 ((LocaleAwareAppCompatActivity) getActivity()).openPreferences();
                 break;
