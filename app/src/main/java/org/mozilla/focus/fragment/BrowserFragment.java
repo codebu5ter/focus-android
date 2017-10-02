@@ -65,6 +65,7 @@ import org.mozilla.focus.utils.DrawableUtils;
 import org.mozilla.focus.utils.UrlUtils;
 import org.mozilla.focus.web.Download;
 import org.mozilla.focus.web.IWebView;
+import org.mozilla.focus.web.WebViewProvider;
 import org.mozilla.focus.widget.AnimatedProgressBar;
 import org.mozilla.focus.widget.FloatingEraseButton;
 import org.mozilla.focus.widget.FloatingSessionsButton;
@@ -775,10 +776,14 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
             }
 
             case R.id.req_desktop: {
-//                final IWebView webView = getWebView();
-//                if (webView != null) {
-//                    webView.stopLoading();
-//                }
+                final WebViewProvider webViewProvider = new WebViewProvider();
+                webViewProvider.setUserAgent(getContext(),true);
+                break;
+            }
+
+            case R.id.req_mobile: {
+                final WebViewProvider webViewProvider = new WebViewProvider();
+                webViewProvider.setUserAgent(getContext(),false);
                 break;
             }
 

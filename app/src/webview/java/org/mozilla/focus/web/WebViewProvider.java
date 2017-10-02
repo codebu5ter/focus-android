@@ -8,11 +8,13 @@ package org.mozilla.focus.web;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
+import android.webkit.CookieManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
@@ -20,6 +22,8 @@ import org.mozilla.focus.R;
 import org.mozilla.focus.utils.Settings;
 import org.mozilla.focus.webview.SystemWebView;
 import org.mozilla.focus.webview.TrackingProtectionWebViewClient;
+
+import java.util.Vector;
 
 /**
  * WebViewProvider for creating a WebView based IWebView implementation.
@@ -38,8 +42,9 @@ public class WebViewProvider {
         SystemWebView.deleteContentFromKnownLocations(context);
     }
 
+    public static SystemWebView webkitView;
     public static View create(Context context, AttributeSet attrs) {
-        final SystemWebView webkitView = new SystemWebView(context, attrs);
+        webkitView = new SystemWebView(context, attrs);
         final WebSettings settings = webkitView.getSettings();
 
         setupView(webkitView);
@@ -47,6 +52,85 @@ public class WebViewProvider {
         applyAppSettings(context, settings);
 
         return webkitView;
+    }
+
+    private String getDefaultUA(Context context) {
+        return WebSettings.getDefaultUserAgent(context);
+    }
+
+    private static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (Mozilla/5.0 (X11; CrOS x86_64 8172.45.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.64 Safari/537.36";
+
+    public void setUserAgent(Context context, boolean choice) {
+        if (webkitView != null) {
+            String DEFAULT_USER_AGENT = getDefaultUA(context);
+            if (choice) {
+                CookieManager mCookieManager = CookieManager.getInstance();
+                clearCookieByUrl(webkitView.getUrl(), mCookieManager);
+                webkitView.getSettings().setUserAgentString(DESKTOP_USER_AGENT);
+                webkitView.zoomOut();
+                webkitView.reload();
+            } else {
+                CookieManager mCookieManager = CookieManager.getInstance();
+                clearCookieByUrl(webkitView.getUrl(), mCookieManager);
+                webkitView.getSettings().setUserAgentString(DEFAULT_USER_AGENT);
+                webkitView.zoomOut();
+                webkitView.reload();
+            }
+        }
+    }
+
+    private static void clearCookieByUrl(String url, CookieManager pCookieManager) {
+        try {
+            Uri uri = Uri.parse(url);
+            String host = uri.getHost();
+            clearCookieByUrlInternal(url,pCookieManager);
+            clearCookieByUrlInternal("http://." + host,pCookieManager);
+            clearCookieByUrlInternal("https://." + host,pCookieManager);
+        } catch (Exception ignored) {
+
+        }
+    }
+
+    private static void clearCookieByUrlInternal(String url, CookieManager pCookieManager) {
+        if (TextUtils.isEmpty(url)) {
+            return;
+        }
+        String cookieString = pCookieManager.getCookie(url);
+        Vector<String> cookie = getCookieNamesByUrl(cookieString);
+        if (cookie == null || cookie.isEmpty()) {
+            return;
+        }
+        int len = cookie.size();
+        for (int i = 0; i < len; i++) {
+            pCookieManager.setCookie(url, cookie.get(i) + "=-1");
+        }
+        pCookieManager.flush();
+    }
+
+    private static Vector<String> getCookieNamesByUrl(String cookie) {
+        if (TextUtils.isEmpty(cookie)) {
+            return null;
+        }
+        String[] cookieField = cookie.split(";");
+        int len = cookieField.length;
+        for (int i = 0; i < len; i++) {
+            cookieField[i] = cookieField[i].trim();
+        }
+        Vector<String> allCookieField = new Vector<>();
+        for (String aCookieField : cookieField) {
+            if (TextUtils.isEmpty(aCookieField)) {
+                continue;
+            }
+            if (!aCookieField.contains("=")) {
+                continue;
+            }
+            String[] singleCookieField = aCookieField.split("=");
+            allCookieField.add(singleCookieField[0]);
+        }
+        if (allCookieField.isEmpty()) {
+            return null;
+        }
+        return allCookieField;
     }
 
     private static void setupView(WebView webView) {
