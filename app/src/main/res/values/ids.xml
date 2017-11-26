@@ -11,6 +11,8 @@
     <item name="finish" type="id" />
     <item name="next" type="id" />
     <item name="add_to_homescreen" type="id" />
+    <item name="req_desktop" type="id" />
+    <item name="req_mobile" type="id" />
     <item name="help" type="id" />
     <item name="whats_new" type="id" />
 </resources>
