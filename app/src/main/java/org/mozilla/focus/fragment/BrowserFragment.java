@@ -34,6 +34,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
+import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -65,6 +66,7 @@ import org.mozilla.focus.utils.DrawableUtils;
 import org.mozilla.focus.utils.UrlUtils;
 import org.mozilla.focus.web.Download;
 import org.mozilla.focus.web.IWebView;
+import org.mozilla.focus.web.WebViewProvider;
 import org.mozilla.focus.widget.AnimatedProgressBar;
 import org.mozilla.focus.widget.FloatingEraseButton;
 import org.mozilla.focus.widget.FloatingSessionsButton;
@@ -774,6 +776,13 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
                 break;
             }
 
+            case R.id.find: {
+                final WebViewProvider webViewProvider = new WebViewProvider();
+                final WebView web = webViewProvider.webkitView;
+                web.findAllAsync("Hello");
+                break;
+            }
+
             case R.id.settings:
                 ((LocaleAwareAppCompatActivity) getActivity()).openPreferences();
                 break;
@@ -851,6 +860,22 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
             default:
                 throw new IllegalArgumentException("Unhandled menu item in BrowserFragment");
         }
+    }
+
+    private void showFindInPageControls(@NonNull String text) {
+        mSearchBar.setVisibility(View.VISIBLE);
+
+        TextView tw = (TextView) findViewById(R.id.search_query);
+        tw.setText('\'' + text + '\'');
+
+        ImageButton up = (ImageButton) findViewById(R.id.button_next);
+        up.setOnClickListener(this);
+
+        ImageButton down = (ImageButton) findViewById(R.id.button_back);
+        down.setOnClickListener(this);
+
+        ImageButton quit = (ImageButton) findViewById(R.id.button_quit);
+        quit.setOnClickListener(this);
     }
 
     private void updateToolbarButtonStates(boolean isLoading) {

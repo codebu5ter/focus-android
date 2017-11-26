@@ -38,8 +38,9 @@ public class WebViewProvider {
         SystemWebView.deleteContentFromKnownLocations(context);
     }
 
+    public static SystemWebView webkitView;
     public static View create(Context context, AttributeSet attrs) {
-        final SystemWebView webkitView = new SystemWebView(context, attrs);
+        webkitView = new SystemWebView(context, attrs);
         final WebSettings settings = webkitView.getSettings();
 
         setupView(webkitView);
