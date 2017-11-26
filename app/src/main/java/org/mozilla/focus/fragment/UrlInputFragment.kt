@@ -7,6 +7,8 @@ package org.mozilla.focus.fragment
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.content.ClipboardManager
+import android.content.Context.CLIPBOARD_SERVICE
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.SpannableString
@@ -32,6 +34,8 @@ import org.mozilla.focus.utils.*
 import org.mozilla.focus.whatsnew.WhatsNew
 import org.mozilla.focus.widget.InlineAutocompleteEditText
 
+
+
 /**
  * Fragment for displaying he URL input controls.
  */
@@ -47,6 +51,8 @@ class UrlInputFragment : LocaleAwareFragment(), View.OnClickListener, InlineAuto
         private val ARGUMENT_HEIGHT = "height"
 
         private val ARGUMENT_SESSION_UUID = "sesssion_uuid"
+
+        private var pasteString = ""
 
         private val ANIMATION_BROWSER_SCREEN = "browser_screen"
 
@@ -129,7 +135,15 @@ class UrlInputFragment : LocaleAwareFragment(), View.OnClickListener, InlineAuto
             inflater.inflate(R.layout.fragment_urlinput, container, false)
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
-        listOf(dismissView, clearView, searchView).forEach { it.setOnClickListener(this) }
+        listOf(dismissView, clearView, searchView, search_hint_clip).forEach { it.setOnClickListener(this) }
+
+        val clipboard = context.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+
+        if (clipboard.hasPrimaryClip()) {
+            val clip = clipboard.getPrimaryClip()
+            val item = clip.getItemAt(0)
+            pasteString = item.coerceToText(getContext()).toString()
+        }
 
         urlView.setOnFilterListener(this)
         urlView.imeOptions = urlView.imeOptions or ViewUtils.IME_FLAG_NO_PERSONALIZED_LEARNING
@@ -226,6 +240,8 @@ class UrlInputFragment : LocaleAwareFragment(), View.OnClickListener, InlineAuto
 
                 displayedPopupMenu = menu
             }
+
+            R.id.search_hint_clip -> onSearchClip()
 
             R.id.whats_new -> context?.let {
                 TelemetryWrapper.openWhatsNewEvent(WhatsNew.shouldHighlightWhatsNew(it))
@@ -449,6 +465,14 @@ class UrlInputFragment : LocaleAwareFragment(), View.OnClickListener, InlineAuto
         TelemetryWrapper.searchSelectEvent()
     }
 
+    private fun onSearchClip() {
+        val searchUrl = UrlUtils.createSearchUrl(getContext(), pasteString)
+
+        openUrl(searchUrl, pasteString)
+
+        TelemetryWrapper.searchSelectEvent()
+    }
+
     private fun openUrl(url: String, searchTerms: String?) {
         session?.searchTerms = searchTerms
 
@@ -509,12 +533,20 @@ class UrlInputFragment : LocaleAwareFragment(), View.OnClickListener, InlineAuto
             // of the hint string. To take care of LTR, RTL, and special LTR cases, we use a
             // placeholder to know the start and end indices of where we should bold the search text
             val hint = getString(R.string.search_hint, PLACEHOLDER)
+            val hintClip = getString(R.string.search_hint, pasteString);
             val start = hint.indexOf(PLACEHOLDER)
 
             val content = SpannableString(hint.replace(PLACEHOLDER, searchText))
             content.setSpan(StyleSpan(Typeface.BOLD), start, start + searchText.length, 0)
 
             searchView.text = content
+
+            if (pasteString == null) {
+                search_hint_clip.setVisibility(View.GONE);
+            } else {
+                search_hint_clip.setText(hintClip);
+            }
+
             searchViewContainer.visibility = View.VISIBLE
         }
     }
