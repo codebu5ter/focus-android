@@ -58,7 +58,7 @@ public class WebViewProvider {
         return WebSettings.getDefaultUserAgent(context);
     }
 
-    private static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (Mozilla/5.0 (X11; CrOS x86_64 8172.45.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.64 Safari/537.36";
+    private static final String DESKTOP_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36";
 
     public void setUserAgent(Context context, boolean choice) {
         if (webkitView != null) {
