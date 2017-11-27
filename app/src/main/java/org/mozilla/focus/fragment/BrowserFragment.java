@@ -10,6 +10,7 @@ import android.app.DownloadManager;
 import android.app.PendingIntent;
 import android.arch.lifecycle.Observer;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
@@ -27,6 +28,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,9 +37,11 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -194,7 +198,6 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
             // then restore the download object.
             pendingDownload = savedInstanceState.getParcelable(RESTORE_KEY_DOWNLOAD);
         }
-
         final View view = inflater.inflate(R.layout.fragment_browser, container, false);
 
         videoContainer = (ViewGroup) view.findViewById(R.id.video_container);
@@ -704,6 +707,9 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
         SessionManager.getInstance().removeCurrentSession();
     }
 
+    final WebViewProvider webViewProvider = new WebViewProvider();
+    final WebView web = webViewProvider.webkitView;
+
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
@@ -777,11 +783,20 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
             }
 
             case R.id.find: {
-                final WebViewProvider webViewProvider = new WebViewProvider();
-                final WebView web = webViewProvider.webkitView;
-                web.findAllAsync("Hello");
+                showDialog();
                 break;
             }
+
+            case R.id.button_next:
+                web.findNext(true);
+                break;
+            case R.id.button_back:
+                web.findNext(false);
+                break;
+            case R.id.button_quit:
+                web.clearMatches();
+//                rel.setVisibility(View.GONE);
+                break;
 
             case R.id.settings:
                 ((LocaleAwareAppCompatActivity) getActivity()).openPreferences();
@@ -862,19 +877,50 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
         }
     }
 
-    private void showFindInPageControls(@NonNull String text) {
-        mSearchBar.setVisibility(View.VISIBLE);
+    private void showDialog() {
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        final View textenter = inflater.inflate(R.layout.item_find, null);
+        final EditText userinput = (EditText) textenter.findViewById(R.id.etComments);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setView(textenter)
+                .setTitle("Find in page");
+        builder.setPositiveButton("Find", new DialogInterface.OnClickListener() {
 
-        TextView tw = (TextView) findViewById(R.id.search_query);
+            @Override
+            public void onClick(DialogInterface dialog, int id) {
+                String inputvalue =  userinput.getText().toString();
+                final WebViewProvider webViewProvider = new WebViewProvider();
+                final WebView web = webViewProvider.webkitView;
+                web.findAllAsync(inputvalue);
+                showFindInPageControls(inputvalue);
+            }
+        })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+        builder.show();
+    }
+
+    private void showFindInPageControls(@NonNull String text) {
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        final View rel = inflater.inflate(R.layout.search_interface, null);
+//        LayoutInflater inflater = (LayoutInflater)getContext()
+//                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        RelativeLayout main = (RelativeLayout) rel.findViewById(R.id.search_bar);
+        main.setVisibility(View.VISIBLE);
+
+        TextView tw = (TextView) rel.findViewById(R.id.search_query);
         tw.setText('\'' + text + '\'');
 
-        ImageButton up = (ImageButton) findViewById(R.id.button_next);
+        ImageButton up = (ImageButton) main.findViewById(R.id.button_next);
         up.setOnClickListener(this);
 
-        ImageButton down = (ImageButton) findViewById(R.id.button_back);
+        ImageButton down = (ImageButton) main.findViewById(R.id.button_back);
         down.setOnClickListener(this);
 
-        ImageButton quit = (ImageButton) findViewById(R.id.button_quit);
+        ImageButton quit = (ImageButton) main.findViewById(R.id.button_quit);
         quit.setOnClickListener(this);
     }
 
