@@ -10,6 +10,7 @@ import android.app.DownloadManager;
 import android.app.PendingIntent;
 import android.arch.lifecycle.Observer;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
@@ -28,6 +29,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -36,6 +38,8 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
+import android.webkit.WebView;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -818,6 +822,11 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
                 break;
             }
 
+            case R.id.find: {
+                showDialog();
+                break;
+            }
+
             case R.id.share: {
                 final String url = getUrl();
                 final Intent shareIntent = new Intent(Intent.ACTION_SEND);
@@ -958,6 +967,31 @@ public class BrowserFragment extends WebFragment implements View.OnClickListener
         // URL for error pages. The URL we show in the toolbar is (A) always correct and (B) what the
         // user is probably expecting to share, so lets use that here:
         return urlView.getText().toString();
+    }
+
+    private void showDialog() {
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        final View textenter = inflater.inflate(R.layout.item_find, null);
+        final EditText userinput = (EditText) textenter.findViewById(R.id.etComments);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setView(textenter)
+                .setTitle("Find in page");
+        builder.setPositiveButton("Find", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int id) {
+                String inputvalue =  userinput.getText().toString();
+                final WebViewProvider webViewProvider = new WebViewProvider();
+                final WebView web = webViewProvider.webkitView;
+                web.findAllAsync(inputvalue);
+            }
+        })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+        builder.show();
     }
 
     public boolean canGoForward() {

@@ -79,6 +79,8 @@ public class BrowserMenuAdapter extends RecyclerView.Adapter<BrowserMenuViewHold
                     R.string.menu_open_with_a_browser)));
         }
 
+        items.add(new MenuItem(R.id.find, "Find in page"));
+
         items.add(new MenuItem(R.id.req_desktop, "Request Desktop Website"));
 
         items.add(new MenuItem(R.id.req_mobile, "Request Mobile Website"));
